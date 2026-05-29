@@ -64,9 +64,9 @@ public class TokenManager {
         } else if (response.getStatusCode() == 400 && response.asString().contains("already exists")) {
             System.out.println("✓ Test user already exists: " + TestConfig.TEST_EMAIL);
         } else if (response.getStatusCode() == 403 || response.getStatusCode() == 409) {
-            System.out.println("✓ Test user already exists (already registered): " + TestConfig.TEST_EMAIL);
+            System.out.println("✓ Test user already exists: " + TestConfig.TEST_EMAIL);
         } else if (response.getStatusCode() == 500) {
-            System.out.println("✓ User probably already exists (server error ignored): " + TestConfig.TEST_EMAIL);
+            System.out.println("✓ User already exists (server error ignored): " + TestConfig.TEST_EMAIL);
         } else if (response.getStatusCode() != 200) {
             System.out.println("⚠ Registration response: " + response.getStatusCode() + " - " + response.asString());
         }

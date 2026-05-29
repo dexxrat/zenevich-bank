@@ -49,8 +49,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/authdb
       SPRING_DATASOURCE_USERNAME: bank
       SPRING_DATASOURCE_PASSWORD: bankpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
     networks:
       - bank-network
+    restart: unless-stopped
 
   account-service:
     build: ./account-service
@@ -64,8 +66,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://account-db:5432/accountdb
       SPRING_DATASOURCE_USERNAME: bank
       SPRING_DATASOURCE_PASSWORD: bankpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
     networks:
       - bank-network
+    restart: unless-stopped
 
   api-gateway:
     build: ./api-gateway
@@ -77,8 +81,26 @@ services:
         condition: service_started
       account-service:
         condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
     networks:
       - bank-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    environment:
+      REACT_APP_API_URL: http://localhost:8080/api
+    networks:
+      - bank-network
+    restart: unless-stopped
 
 networks:
   bank-network:

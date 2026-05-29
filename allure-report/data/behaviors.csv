@@ -1,6 +1,6 @@
 "Epic","Feature","Story","FAILED","BROKEN","PASSED","SKIPPED","UNKNOWN"
-"Account Service API Tests","Account Management","Get Account By ID","0","0","1","0","0"
 "Auth Service API Tests","Authentication","User Login","0","0","2","0","0"
-"Auth Service API Tests","Authentication","User Profile","0","0","1","0","0"
+"Account Service API Tests","Account Management","Get Account By ID","0","0","1","0","0"
 "Account Service API Tests","Account Management","Create Account","0","0","2","0","0"
+"Auth Service API Tests","Authentication","User Profile","0","0","1","0","0"
 "Account Service API Tests","Account Management","Get Accounts","0","0","1","0","0"

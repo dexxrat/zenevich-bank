@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # PostgreSQL для auth-service
   auth-db:
     image: postgres:16
     container_name: auth-db
@@ -21,7 +18,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # PostgreSQL для account-service
   account-db:
     image: postgres:16
     container_name: account-db
@@ -41,12 +37,11 @@ services:
       timeout: 5s
       retries: 5
 
-  # auth-service (будем собирать из исходников)
   auth-service:
     build: ./auth-service
     container_name: auth-service
-    ports:
-      - "8081:8081"
+    expose:
+      - "8081"
     depends_on:
       auth-db:
         condition: service_healthy
@@ -57,12 +52,11 @@ services:
     networks:
       - bank-network
 
-  # account-service
   account-service:
     build: ./account-service
     container_name: account-service
-    ports:
-      - "8082:8082"
+    expose:
+      - "8082"
     depends_on:
       account-db:
         condition: service_healthy
@@ -70,6 +64,19 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://account-db:5432/accountdb
       SPRING_DATASOURCE_USERNAME: bank
       SPRING_DATASOURCE_PASSWORD: bankpass
+    networks:
+      - bank-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      auth-service:
+        condition: service_started
+      account-service:
+        condition: service_started
     networks:
       - bank-network
 

@@ -21,40 +21,67 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build microservices with Maven
+      - name: Build auth-service with Maven
         run: |
-          mvn -f auth-service/pom.xml clean package -DskipTests
-          mvn -f account-service/pom.xml clean package -DskipTests
+          cd auth-service
+          mvn clean package -DskipTests
+          cd ..
+
+      - name: Build account-service with Maven
+        run: |
+          cd account-service
+          mvn clean package -DskipTests
+          cd ..
+
+      - name: Build api-gateway with Maven
+        run: |
+          cd api-gateway
+          mvn clean package -DskipTests
+          cd ..
+
+      - name: Verify JAR files exist
+        run: |
+          ls -la auth-service/target/*.jar
+          ls -la account-service/target/*.jar
+          ls -la api-gateway/target/*.jar
 
       - name: Build Docker images
         run: |
           docker build -t auth-service ./auth-service
           docker build -t account-service ./account-service
+          docker build -t api-gateway ./api-gateway
+          docker build -t frontend ./frontend
 
       - name: Start services with Docker Compose
         run: docker compose up -d
 
       - name: Wait for services to be ready
         run: |
-          sleep 20
-          curl --retry 10 --retry-delay 5 --fail http://localhost:8081/actuator/health || true
-          curl --retry 10 --retry-delay 5 --fail http://localhost:8082/actuator/health || true
+          sleep 30
+          echo "Waiting for auth-service..."
+          curl --retry 10 --retry-delay 5 --fail http://localhost:8080/api/auth/login -X POST -H "Content-Type: application/json" -d '{"email":"testauto@mail.com","password":"123456"}' || true
 
       - name: Run API tests
-        run: mvn -f aqa-tests/pom.xml clean test
+        run: |
+          cd aqa-tests
+          mvn clean test
+          cd ..
 
       - name: Generate Allure Report
         if: always()
         run: |
-          mvn -f aqa-tests/pom.xml allure:report
-          mv aqa-tests/target/site/allure-maven-plugin ./allure-report
+          cd aqa-tests
+          mvn allure:report
+          cd ..
+          mkdir -p allure-report
+          cp -r aqa-tests/target/site/allure-maven-plugin/* allure-report/ || true
 
       - name: Upload Allure Report as Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
-          path: ./allure-report
+          path: allure-report
           retention-days: 7
 
   deploy-report:

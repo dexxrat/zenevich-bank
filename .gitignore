@@ -39,17 +39,14 @@ build/
 
 # Compiled files
 *.class
-target/
+
 *.jar
 *.war
 
 # IDE files
 .idea/
-*.iml
+
 .settings/
-.project
-.classpath
-.vscode/
 
 # Logs
 *.log
@@ -66,6 +63,17 @@ allure-results/
 allure-report/
 
 # OS files
-.DS_Store
+
 Thumbs.db
+
+# Compiled files
+
+
+
+
+
+# Node / Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env
 

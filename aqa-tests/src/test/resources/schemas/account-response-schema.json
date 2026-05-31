@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AccountResponseArray",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "accountNumber": {
+        "type": "string",
+        "minLength": 8
+      },
+      "balance": {
+        "type": "number",
+        "minimum": 0
+      },
+      "currency": {
+        "type": "string",
+        "enum": ["USD", "EUR", "GBP", "JPY", "CHF"]
+      },
+      "createdAt": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": ["id", "accountNumber", "balance", "currency", "createdAt"],
+    "additionalProperties": false
+  }
+}

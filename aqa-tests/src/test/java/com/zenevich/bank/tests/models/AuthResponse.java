@@ -15,5 +15,5 @@ public class AuthResponse {
     private String email;
     private String fullName;
     private String id;
-    private String createdAt;    // ← ДОБАВЬ ЭТУ СТРОКУ
+    private String createdAt;
 }

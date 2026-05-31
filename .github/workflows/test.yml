@@ -21,40 +21,68 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build microservices with Maven
+      - name: Build all services with Maven
         run: |
-          mvn -f auth-service/pom.xml clean package -DskipTests
-          mvn -f account-service/pom.xml clean package -DskipTests
+          cd auth-service && mvn clean package -DskipTests && cd ..
+          cd account-service && mvn clean package -DskipTests && cd ..
+          cd api-gateway && mvn clean package -DskipTests && cd ..
+
+      - name: Verify JAR files
+        run: |
+          ls -la auth-service/target/*.jar
+          ls -la account-service/target/*.jar
+          ls -la api-gateway/target/*.jar
 
       - name: Build Docker images
         run: |
           docker build -t auth-service ./auth-service
           docker build -t account-service ./account-service
+          docker build -t api-gateway ./api-gateway
+          docker build -t frontend ./frontend
 
-      - name: Start services with Docker Compose
-        run: docker compose up -d
+      - name: Create network
+        run: docker network create bank-network || true
 
-      - name: Wait for services to be ready
+      - name: Start databases
         run: |
+          docker run -d --name auth-db --network bank-network -p 5434:5432 -e POSTGRES_DB=authdb -e POSTGRES_USER=bank -e POSTGRES_PASSWORD=bankpass postgres:16
+          docker run -d --name account-db --network bank-network -p 5435:5432 -e POSTGRES_DB=accountdb -e POSTGRES_USER=bank -e POSTGRES_PASSWORD=bankpass postgres:16
+          sleep 10
+
+      - name: Start services
+        run: |
+          docker run -d --name auth-service --network bank-network -p 8081:8081 -e SPRING_DATASOURCE_URL=jdbc:postgresql://auth-db:5432/authdb -e SPRING_DATASOURCE_USERNAME=bank -e SPRING_DATASOURCE_PASSWORD=bankpass auth-service
+          docker run -d --name account-service --network bank-network -p 8082:8082 -e SPRING_DATASOURCE_URL=jdbc:postgresql://account-db:5432/accountdb -e SPRING_DATASOURCE_USERNAME=bank -e SPRING_DATASOURCE_PASSWORD=bankpass account-service
+          docker run -d --name api-gateway --network bank-network -p 8080:8080 api-gateway
           sleep 20
-          curl --retry 10 --retry-delay 5 --fail http://localhost:8081/actuator/health || true
-          curl --retry 10 --retry-delay 5 --fail http://localhost:8082/actuator/health || true
+
+      - name: Check services health
+        run: |
+          echo "Checking auth-service..."
+          curl --retry 10 --retry-delay 5 --fail http://localhost:8080/api/auth/login -X POST -H "Content-Type: application/json" -d '{"email":"testauto@mail.com","password":"123456"}' || true
+          echo "Services started"
 
       - name: Run API tests
-        run: mvn -f aqa-tests/pom.xml clean test
+        run: |
+          cd aqa-tests
+          mvn clean test
+          cd ..
 
       - name: Generate Allure Report
         if: always()
         run: |
-          mvn -f aqa-tests/pom.xml allure:report
-          mv aqa-tests/target/site/allure-maven-plugin ./allure-report
+          cd aqa-tests
+          mvn allure:report
+          cd ..
+          mkdir -p allure-report
+          cp -r aqa-tests/target/site/allure-maven-plugin/* allure-report/ || true
 
       - name: Upload Allure Report as Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
-          path: ./allure-report
+          path: allure-report
           retention-days: 7
 
   deploy-report:
